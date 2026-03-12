@@ -3,6 +3,8 @@
 // Endpoint pubblico per il tracking delle consegne
 //=================================================
 
+
+
 const express = require("express");
 const router = express.Router();
 
@@ -15,6 +17,61 @@ const trackingController = (sql) => {
    *
    * Restituisce stato, data ritiro e consegna (se presente).
    */
+  /**
+ * @openapi
+ * /tracking:
+ *   get:
+ *     summary: Tracking di una consegna
+ *     description: Restituisce lo stato di una consegna a partire da chiave e data di ritiro.
+ *     tags:
+ *       - Tracking
+ *     parameters:
+ *       - in: query
+ *         name: chiaveConsegna
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Chiave univoca della consegna
+ *       - in: query
+ *         name: dataRitiro
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Data di ritiro (YYYY-MM-DD)
+ *     responses:
+ *       200:
+ *         description: Dati di tracking della consegna
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     chiaveConsegna:
+ *                       type: string
+ *                     stato:
+ *                       type: string
+ *                     dataRitiro:
+ *                       type: string
+ *                       format: date-time
+ *                     dataConsegna:
+ *                       type: string
+ *                       format: date-time
+ *                       nullable: true
+ *                     cliente:
+ *                       type: string
+ *       400:
+ *         description: Parametri mancanti
+ *       404:
+ *         description: Nessuna consegna trovata
+ *       500:
+ *         description: Errore interno del server
+ */
   router.get("/", async (req, res) => {
     const { chiaveConsegna, dataRitiro } = req.query;
 

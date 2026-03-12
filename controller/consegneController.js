@@ -3,6 +3,43 @@
 // Gestione CRUD delle consegne dei corrieri
 //=================================================
 
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Consegna:
+ *       type: object
+ *       properties:
+ *         ConsegnaID:
+ *           type: integer
+ *           example: 10
+ *         ClienteID:
+ *           type: integer
+ *           example: 1
+ *         ClienteNominativo:
+ *           type: string
+ *           example: "Mario Rossi"
+ *         ClienteComune:
+ *           type: string
+ *           example: "Milano"
+ *         ClienteProvincia:
+ *           type: string
+ *           example: "MI"
+ *         DataRitiro:
+ *           type: string
+ *           format: date-time
+ *         DataConsegna:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *         Stato:
+ *           type: string
+ *           example: "in consegna"
+ *         ChiaveConsegna:
+ *           type: string
+ *           example: "ABC123"
+ */
+
 const express = require("express");
 const router = express.Router();
 
@@ -29,6 +66,46 @@ const consegneController = (sql) => {
    * - clienteId
    * - stato
    */
+  /**
+ * @openapi
+ * /consegne:
+ *   get:
+ *     summary: Lista delle consegne
+ *     description: Restituisce la lista delle consegne, con filtri opzionali per cliente e stato.
+ *     tags:
+ *       - Consegne
+ *     parameters:
+ *       - in: query
+ *         name: clienteId
+ *         schema:
+ *           type: integer
+ *         required: false
+ *         description: ID del cliente
+ *       - in: query
+ *         name: stato
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: Stato della consegna
+ *     responses:
+ *       200:
+ *         description: Lista delle consegne
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 count:
+ *                   type: integer
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Consegna'
+ *       500:
+ *         description: Errore interno del server
+ */
   router.get("/", async (req, res) => {
     console.log("[CONSEGNE] Richiesta lista consegne");
 
@@ -93,6 +170,39 @@ const consegneController = (sql) => {
    * GET /consegne/:id
    * Dettaglio di una singola consegna
    */
+  /**
+ * @openapi
+ * /consegne/{id}:
+ *   get:
+ *     summary: Dettaglio consegna
+ *     tags:
+ *       - Consegne
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID della consegna
+ *     responses:
+ *       200:
+ *         description: Dettaglio di una consegna
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Consegna'
+ *       400:
+ *         description: ID non valido
+ *       404:
+ *         description: Consegna non trovata
+ *       500:
+ *         description: Errore interno del server
+ */
   router.get("/:id", async (req, res) => {
     console.log("[CONSEGNE] Richiesta dettaglio consegna ID:", req.params.id);
     const { id } = req.params;
@@ -150,6 +260,47 @@ const consegneController = (sql) => {
    * - stato (string, obbligatorio, uno di STATI_CONSEGNA)
    * - chiaveConsegna (string, obbligatorio)
    */
+
+  /**
+ * @openapi
+ * /consegne:
+ *   post:
+ *     summary: Crea una nuova consegna
+ *     tags:
+ *       - Consegne
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - clienteId
+ *               - stato
+ *               - chiaveConsegna
+ *             properties:
+ *               clienteId:
+ *                 type: integer
+ *               dataRitiro:
+ *                 type: string
+ *                 format: date-time
+ *               dataConsegna:
+ *                 type: string
+ *                 format: date-time
+ *               stato:
+ *                 type: string
+ *               chiaveConsegna:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Consegna creata con successo
+ *       400:
+ *         description: Dati mancanti o non validi
+ *       404:
+ *         description: Cliente non trovato
+ *       500:
+ *         description: Errore interno del server
+ */
   router.post("/", async (req, res) => {
     console.log("[CONSEGNE] Creazione nuova consegna");
 
@@ -230,6 +381,53 @@ const consegneController = (sql) => {
    * Modifica una consegna esistente.
    * Body come nel POST.
    */
+  /**
+ * @openapi
+ * /consegne/{id}:
+ *   put:
+ *     summary: Modifica una consegna esistente
+ *     tags:
+ *       - Consegne
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID della consegna da modificare
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - clienteId
+ *               - stato
+ *               - chiaveConsegna
+ *             properties:
+ *               clienteId:
+ *                 type: integer
+ *               dataRitiro:
+ *                 type: string
+ *                 format: date-time
+ *               dataConsegna:
+ *                 type: string
+ *                 format: date-time
+ *               stato:
+ *                 type: string
+ *               chiaveConsegna:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Consegna aggiornata con successo
+ *       400:
+ *         description: Dati mancanti o non validi
+ *       404:
+ *         description: Consegna o cliente non trovati
+ *       500:
+ *         description: Errore interno del server
+ */
   router.put("/:id", async (req, res) => {
     console.log("[CONSEGNE] Modifica consegna ID:", req.params.id);
     const { id } = req.params;
@@ -326,6 +524,30 @@ const consegneController = (sql) => {
    * DELETE /consegne/:id
    * Cancella una consegna.
    */
+  /**
+ * @openapi
+ * /consegne/{id}:
+ *   delete:
+ *     summary: Elimina una consegna
+ *     tags:
+ *       - Consegne
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID della consegna da eliminare
+ *     responses:
+ *       200:
+ *         description: Consegna eliminata con successo
+ *       400:
+ *         description: ID non valido
+ *       404:
+ *         description: Consegna non trovata
+ *       500:
+ *         description: Errore interno del server
+ */
   router.delete("/:id", async (req, res) => {
     console.log("[CONSEGNE] Eliminazione consegna ID:", req.params.id);
     const { id } = req.params;

@@ -4,6 +4,41 @@
 // @author: andrea.villari@allievi.itsdigitalacademy.com
 // @version: 1.0.0 2026-01-14
 // =================================================
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Cliente:
+ *       type: object
+ *       properties:
+ *         ClienteID:
+ *           type: integer
+ *           example: 1
+ *         Nominativo:
+ *           type: string
+ *           example: "Mario Rossi"
+ *         Via:
+ *           type: string
+ *           example: "Via Roma 10"
+ *         Comune:
+ *           type: string
+ *           example: "Milano"
+ *         Provincia:
+ *           type: string
+ *           example: "MI"
+ *         Telefono:
+ *           type: string
+ *           example: "023456789"
+ *         Email:
+ *           type: string
+ *           format: email
+ *           example: "mario.rossi@example.com"
+ *         Note:
+ *           type: string
+ *           nullable: true
+ *           example: "Cliente storico"
+ */
+
 
 const express = require("express");
 const router = express.Router();
@@ -11,6 +46,35 @@ const router = express.Router();
 const clienteController = (sql) => {
 
     // GET /clienti - lista completa clienti
+    /**
+ * @openapi
+ * /clienti:
+ *   get:
+ *     summary: Lista completa dei clienti
+ *     description: Ottieni la lista completa dei clienti.
+ *     tags:
+ *       - Clienti
+ *     responses:
+ *       200:
+ *         description: Lista dei clienti recuperata con successo
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 count:
+ *                   type: integer
+ *                   example: 2
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Cliente'
+ *       500:
+ *         description: Errore interno del server
+ */
     router.get("/", async (req, res) => {
         console.log("[CLIENTE] Richiesta lista clienti");
 
@@ -47,6 +111,39 @@ const clienteController = (sql) => {
     });
 
     // GET /clienti/:id - dettaglio cliente
+    /**
+     /**
+ * @openapi
+ * /clienti/{id}:
+ *   get:
+ *     summary: Dettaglio cliente
+ *     description: Ottieni il dettaglio di un singolo cliente tramite ID.
+ *     tags:
+ *       - Clienti
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del cliente
+ *     responses:
+ *       200:
+ *         description: Dettaglio del cliente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Cliente'
+ *       404:
+ *         description: Cliente non trovato
+ *       500:
+ *         description: Errore interno del server
+ */
     router.get("/:id", async (req, res) => {
         console.log("[CLIENTE] Richiesto cliente ID:", req.params.id);
         const { id } = req.params;
@@ -87,6 +184,48 @@ const clienteController = (sql) => {
     });
 
     // POST /clienti - crea nuovo cliente
+    /**
+ * @openapi
+ * /clienti:
+ *   post:
+ *     summary: Crea un nuovo cliente
+ *     tags:
+ *       - Clienti
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - nominativo
+ *               - via
+ *             properties:
+ *               nominativo:
+ *                 type: string
+ *               via:
+ *                 type: string
+ *               comune:
+ *                 type: string
+ *               provincia:
+ *                 type: string
+ *               telefono:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               note:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Cliente creato con successo
+ *       400:
+ *         description: Dati mancanti o non validi
+ *       409:
+ *         description: Cliente già esistente
+ *       500:
+ *         description: Errore interno del server
+ */
+
     router.post("/", async (req, res) => {
         console.log("[CLIENTE] Nuovo cliente");
         const { nominativo, via, comune, provincia, telefono, email, note } = req.body || {};
@@ -152,6 +291,56 @@ const clienteController = (sql) => {
     });
 
     // PUT /clienti/:id - modifica cliente
+    /**
+ * @openapi
+ * /clienti/{id}:
+ *   put:
+ *     summary: Modifica un cliente esistente
+ *     tags:
+ *       - Clienti
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del cliente da modificare
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - nominativo
+ *               - via
+ *             properties:
+ *               nominativo:
+ *                 type: string
+ *               via:
+ *                 type: string
+ *               comune:
+ *                 type: string
+ *               provincia:
+ *                 type: string
+ *               telefono:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               note:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Cliente modificato con successo
+ *       400:
+ *         description: Dati mancanti o non validi
+ *       404:
+ *         description: Cliente non trovato
+ *       409:
+ *         description: Duplicato sul nominativo
+ *       500:
+ *         description: Errore interno del server
+ */
     router.put("/:id", async (req, res) => {
         console.log("[CLIENTE] Modifica cliente ID:", req.params.id);
         const { id } = req.params;
@@ -236,6 +425,32 @@ const clienteController = (sql) => {
     });
 
     // DELETE /clienti/:id - elimina cliente se non ha consegne associate
+
+    /**
+ * @openapi
+ * /clienti/{id}:
+ *   delete:
+ *     summary: Elimina un cliente
+ *     description: Elimina un cliente se non ha consegne associate.
+ *     tags:
+ *       - Clienti
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del cliente da eliminare
+ *     responses:
+ *       200:
+ *         description: Cliente eliminato con successo
+ *       404:
+ *         description: Cliente non trovato
+ *       409:
+ *         description: Cliente con consegne associate, impossibile eliminare
+ *       500:
+ *         description: Errore interno del server
+ */
     router.delete("/:id", async (req, res) => {
         console.log("[CLIENTE] Eliminazione cliente ID:", req.params.id);
         const { id } = req.params;
