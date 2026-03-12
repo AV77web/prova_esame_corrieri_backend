@@ -17,7 +17,7 @@ const registrationController = require("./controller/registrationController");
 const authController = require("./controller/authController");
 const authMiddleware = require("./middleware/authMiddleware");
 const consegneController = require("./controller/consegneController");
-const categorieController = require("./controller/categorieController");
+const clienteController = require("./controller/clienteController");
 const { verifyToken, verifyRole } = require("./middleware/authMiddleware");
 const { setupSwagger } = require("./swagger");
 const port = process.env.PORT || 3000;
@@ -65,8 +65,8 @@ setupSwagger(app);
 app.use("/login", loginController(sql));
 app.use("/register", registrationController(sql));
 app.use("/auth", authController(sql));
-app.use("/permessi", verifyToken, permessiController(sql));
-app.use("/categorie", verifyToken, categorieController(sql));
+app.use("/consegne", verifyToken, consegneController(sql));
+app.use("/clienti", verifyToken, clienteController(sql));
 
 
 app.listen(port, "0.0.0.0", () => {
