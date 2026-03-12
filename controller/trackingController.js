@@ -27,16 +27,16 @@ const trackingController = (sql) => {
     try {
       const result = await sql`
         SELECT 
-          c."ConsegnaID"     AS "ConsegnaID",
-          c."ChiaveConsegna" AS "ChiaveConsegna",
-          c."DataRitiro"     AS "DataRitiro",
-          c."DataConsegna"   AS "DataConsegna",
-          c."Stato"          AS "Stato",
-          cli."Nominativo"   AS "ClienteNominativo"
-        FROM "Consegna" c
-        INNER JOIN "Cliente" cli ON c."ClienteID" = cli."ClienteID"
-        WHERE c."ChiaveConsegna" = ${chiaveConsegna}
-          AND c."DataRitiro" = ${dataRitiro}
+          c.consegnaid      AS "ConsegnaID",
+          c.chiaveconsegna  AS "ChiaveConsegna",
+          c.dataritiro      AS "DataRitiro",
+          c.dataconsegna    AS "DataConsegna",
+          c.stato           AS "Stato",
+          cli.nominativo    AS "ClienteNominativo"
+        FROM consegna c
+        INNER JOIN cliente cli ON c.clienteid = cli.clienteid
+        WHERE c.chiaveconsegna = ${chiaveConsegna}
+          AND c.dataritiro = ${dataRitiro}
       `;
 
       if (result.length === 0) {

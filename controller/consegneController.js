@@ -40,12 +40,12 @@ const consegneController = (sql) => {
       if (clienteId) {
         const id = parseInt(clienteId, 10);
         if (!Number.isNaN(id)) {
-          filters.push(sql`c."ClienteID" = ${id}`);
+          filters.push(sql`c.clienteid = ${id}`);
         }
       }
 
       if (stato) {
-        filters.push(sql`c."Stato" = ${stato}`);
+        filters.push(sql`c.stato = ${stato}`);
       }
 
       let whereClause = sql``;
@@ -58,19 +58,19 @@ const consegneController = (sql) => {
 
       const result = await sql`
         SELECT 
-          c."ConsegnaID"     AS "ConsegnaID",
-          c."ClienteID"      AS "ClienteID",
-          cli."Nominativo"   AS "ClienteNominativo",
-          cli."Comune"       AS "ClienteComune",
-          cli."Provincia"    AS "ClienteProvincia",
-          c."DataRitiro"     AS "DataRitiro",
-          c."DataConsegna"   AS "DataConsegna",
-          c."Stato"          AS "Stato",
-          c."ChiaveConsegna" AS "ChiaveConsegna"
-        FROM "Consegna" c
-        INNER JOIN "Cliente" cli ON c."ClienteID" = cli."ClienteID"
+          c.consegnaid      AS "ConsegnaID",
+          c.clienteid       AS "ClienteID",
+          cli.nominativo    AS "ClienteNominativo",
+          cli.comune        AS "ClienteComune",
+          cli.provincia     AS "ClienteProvincia",
+          c.dataritiro      AS "DataRitiro",
+          c.dataconsegna    AS "DataConsegna",
+          c.stato           AS "Stato",
+          c.chiaveconsegna  AS "ChiaveConsegna"
+        FROM consegna c
+        INNER JOIN cliente cli ON c.clienteid = cli.clienteid
         ${whereClause}
-        ORDER BY c."ConsegnaID" DESC
+        ORDER BY c.consegnaid DESC
       `;
 
       console.log(`[CONSEGNE] Trovate ${result.length} consegne`);
@@ -105,22 +105,22 @@ const consegneController = (sql) => {
     try {
       const result = await sql`
         SELECT 
-          c."ConsegnaID"     AS "ConsegnaID",
-          c."ClienteID"      AS "ClienteID",
-          cli."Nominativo"   AS "ClienteNominativo",
-          cli."Via"          AS "ClienteVia",
-          cli."Comune"       AS "ClienteComune",
-          cli."Provincia"    AS "ClienteProvincia",
-          cli."Telefono"     AS "ClienteTelefono",
-          cli."Email"        AS "ClienteEmail",
-          cli."Note"         AS "ClienteNote",
-          c."DataRitiro"     AS "DataRitiro",
-          c."DataConsegna"   AS "DataConsegna",
-          c."Stato"          AS "Stato",
-          c."ChiaveConsegna" AS "ChiaveConsegna"
-        FROM "Consegna" c
-        INNER JOIN "Cliente" cli ON c."ClienteID" = cli."ClienteID"
-        WHERE c."ConsegnaID" = ${consegnaId}
+          c.consegnaid      AS "ConsegnaID",
+          c.clienteid       AS "ClienteID",
+          cli.nominativo    AS "ClienteNominativo",
+          cli.via           AS "ClienteVia",
+          cli.comune        AS "ClienteComune",
+          cli.provincia     AS "ClienteProvincia",
+          cli.telefono      AS "ClienteTelefono",
+          cli.email         AS "ClienteEmail",
+          cli.note          AS "ClienteNote",
+          c.dataritiro      AS "DataRitiro",
+          c.dataconsegna    AS "DataConsegna",
+          c.stato           AS "Stato",
+          c.chiaveconsegna  AS "ChiaveConsegna"
+        FROM consegna c
+        INNER JOIN cliente cli ON c.clienteid = cli.clienteid
+        WHERE c.consegnaid = ${consegnaId}
       `;
 
       if (result.length === 0) {
@@ -184,9 +184,9 @@ const consegneController = (sql) => {
     try {
       // Verifica che il cliente esista
       const clienteCheck = await sql`
-        SELECT "ClienteID"
-        FROM "Cliente"
-        WHERE "ClienteID" = ${clienteIdInt}
+        SELECT clienteid
+        FROM cliente
+        WHERE clienteid = ${clienteIdInt}
       `;
 
       if (clienteCheck.length === 0) {
@@ -194,17 +194,17 @@ const consegneController = (sql) => {
       }
 
       const result = await sql`
-        INSERT INTO "Consegna"
-          ("ClienteID", "DataRitiro", "DataConsegna", "Stato", "ChiaveConsegna")
+        INSERT INTO consegna
+          (clienteid, dataritiro, dataconsegna, stato, chiaveconsegna)
         VALUES
           (${clienteIdInt}, ${dataRitiro || null}, ${dataConsegna || null}, ${stato}, ${chiaveConsegna})
         RETURNING
-          "ConsegnaID"     AS "ConsegnaID",
-          "ClienteID"      AS "ClienteID",
-          "DataRitiro"     AS "DataRitiro",
-          "DataConsegna"   AS "DataConsegna",
-          "Stato"          AS "Stato",
-          "ChiaveConsegna" AS "ChiaveConsegna"
+          consegnaid     AS "ConsegnaID",
+          clienteid      AS "ClienteID",
+          dataritiro     AS "DataRitiro",
+          dataconsegna   AS "DataConsegna",
+          stato          AS "Stato",
+          chiaveconsegna AS "ChiaveConsegna"
       `;
 
       const nuova = result[0];
@@ -270,9 +270,9 @@ const consegneController = (sql) => {
     try {
       // Verifica che la consegna esista
       const checkConsegna = await sql`
-        SELECT "ConsegnaID"
-        FROM "Consegna"
-        WHERE "ConsegnaID" = ${consegnaId}
+        SELECT consegnaid
+        FROM consegna
+        WHERE consegnaid = ${consegnaId}
       `;
       if (checkConsegna.length === 0) {
         return res.status(404).json({ error: "Consegna non trovata" });
@@ -280,30 +280,30 @@ const consegneController = (sql) => {
 
       // Verifica che il cliente esista
       const clienteCheck = await sql`
-        SELECT "ClienteID"
-        FROM "Cliente"
-        WHERE "ClienteID" = ${clienteIdInt}
+        SELECT clienteid
+        FROM cliente
+        WHERE clienteid = ${clienteIdInt}
       `;
       if (clienteCheck.length === 0) {
         return res.status(404).json({ error: "Cliente non trovato" });
       }
 
       const result = await sql`
-        UPDATE "Consegna"
+        UPDATE consegna
         SET
-          "ClienteID"      = ${clienteIdInt},
-          "DataRitiro"     = ${dataRitiro || null},
-          "DataConsegna"   = ${dataConsegna || null},
-          "Stato"          = ${stato},
-          "ChiaveConsegna" = ${chiaveConsegna}
-        WHERE "ConsegnaID" = ${consegnaId}
+          clienteid      = ${clienteIdInt},
+          dataritiro     = ${dataRitiro || null},
+          dataconsegna   = ${dataConsegna || null},
+          stato          = ${stato},
+          chiaveconsegna = ${chiaveConsegna}
+        WHERE consegnaid = ${consegnaId}
         RETURNING
-          "ConsegnaID"     AS "ConsegnaID",
-          "ClienteID"      AS "ClienteID",
-          "DataRitiro"     AS "DataRitiro",
-          "DataConsegna"   AS "DataConsegna",
-          "Stato"          AS "Stato",
-          "ChiaveConsegna" AS "ChiaveConsegna"
+          consegnaid     AS "ConsegnaID",
+          clienteid      AS "ClienteID",
+          dataritiro     AS "DataRitiro",
+          dataconsegna   AS "DataConsegna",
+          stato          AS "Stato",
+          chiaveconsegna AS "ChiaveConsegna"
       `;
 
       console.log("[CONSEGNE] Consegna aggiornata ID:", consegnaId);
@@ -337,9 +337,9 @@ const consegneController = (sql) => {
 
     try {
       const result = await sql`
-        DELETE FROM "Consegna"
-        WHERE "ConsegnaID" = ${consegnaId}
-        RETURNING "ConsegnaID"
+        DELETE FROM consegna
+        WHERE consegnaid = ${consegnaId}
+        RETURNING consegnaid
       `;
 
       if (result.length === 0) {

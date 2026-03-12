@@ -17,16 +17,16 @@ const clienteController = (sql) => {
         try {
             const result = await sql`
                 SELECT 
-                    "ClienteID",
-                    "Nominativo",
-                    "Via",
-                    "Comune",
-                    "Provincia",
-                    "Telefono",
-                    "Email",
-                    "Note"
-                FROM "Cliente"
-                ORDER BY "Nominativo" ASC
+                    clienteid  AS "ClienteID",
+                    nominativo AS "Nominativo",
+                    via        AS "Via",
+                    comune     AS "Comune",
+                    provincia  AS "Provincia",
+                    telefono   AS "Telefono",
+                    email      AS "Email",
+                    note       AS "Note"
+                FROM cliente
+                ORDER BY nominativo ASC
             `;
 
             console.log(`[CLIENTE] Trovati ${result.length} clienti`);
@@ -54,16 +54,16 @@ const clienteController = (sql) => {
         try {
             const result = await sql`
                 SELECT 
-                    "ClienteID",
-                    "Nominativo",
-                    "Via",
-                    "Comune",
-                    "Provincia",
-                    "Telefono",
-                    "Email",
-                    "Note"
-                FROM "Cliente"
-                WHERE "ClienteID" = ${id}
+                    clienteid  AS "ClienteID",
+                    nominativo AS "Nominativo",
+                    via        AS "Via",
+                    comune     AS "Comune",
+                    provincia  AS "Provincia",
+                    telefono   AS "Telefono",
+                    email      AS "Email",
+                    note       AS "Note"
+                FROM cliente
+                WHERE clienteid = ${id}
             `;
 
             if (result.length === 0) {
@@ -106,8 +106,8 @@ const clienteController = (sql) => {
         try {
             // Verifica se esiste già un cliente con lo stesso nominativo
             const checkExisting = await sql`
-                SELECT "ClienteID" FROM "Cliente" 
-                WHERE LOWER("Nominativo") = LOWER(${nominativo})
+                SELECT clienteid FROM cliente
+                WHERE LOWER(nominativo) = LOWER(${nominativo})
             `;
 
             if (checkExisting.length > 0) {
@@ -118,19 +118,19 @@ const clienteController = (sql) => {
 
             // Inserisci il nuovo cliente (ClienteID è SERIAL)
             const result = await sql`
-                INSERT INTO "Cliente" 
-                    ("Nominativo", "Via", "Comune", "Provincia", "Telefono", "Email", "Note")
+                INSERT INTO cliente 
+                    (nominativo, via, comune, provincia, telefono, email, note)
                 VALUES 
                     (${nominativo}, ${via}, ${comune}, ${provincia}, ${telefono}, ${email}, ${note})
                 RETURNING 
-                    "ClienteID",
-                    "Nominativo",
-                    "Via",
-                    "Comune",
-                    "Provincia",
-                    "Telefono",
-                    "Email",
-                    "Note"
+                    clienteid  AS "ClienteID",
+                    nominativo AS "Nominativo",
+                    via        AS "Via",
+                    comune     AS "Comune",
+                    provincia  AS "Provincia",
+                    telefono   AS "Telefono",
+                    email      AS "Email",
+                    note       AS "Note"
             `;
 
             const newCliente = result[0];
@@ -172,8 +172,8 @@ const clienteController = (sql) => {
         try {
             // Verifica se il cliente esiste
             const checkExists = await sql`
-                SELECT "ClienteID" FROM "Cliente" 
-                WHERE "ClienteID" = ${id}
+                SELECT clienteid FROM cliente
+                WHERE clienteid = ${id}
             `;
 
             if (checkExists.length === 0) {
@@ -184,9 +184,9 @@ const clienteController = (sql) => {
 
             // Verifica se esiste già un altro cliente con lo stesso nominativo
             const checkDuplicate = await sql`
-                SELECT "ClienteID" FROM "Cliente" 
-                WHERE LOWER("Nominativo") = LOWER(${nominativo}) 
-                AND "ClienteID" != ${id}
+                SELECT clienteid FROM cliente
+                WHERE LOWER(nominativo) = LOWER(${nominativo})
+                AND clienteid != ${id}
             `;
 
             if (checkDuplicate.length > 0) {
@@ -197,25 +197,25 @@ const clienteController = (sql) => {
 
             // Aggiorna il cliente
             const result = await sql`
-                UPDATE "Cliente" 
+                UPDATE cliente
                 SET 
-                    "Nominativo" = ${nominativo},
-                    "Via"        = ${via},
-                    "Comune"     = ${comune},
-                    "Provincia"  = ${provincia},
-                    "Telefono"   = ${telefono},
-                    "Email"      = ${email},
-                    "Note"       = ${note}
-                WHERE "ClienteID" = ${id}
+                    nominativo = ${nominativo},
+                    via        = ${via},
+                    comune     = ${comune},
+                    provincia  = ${provincia},
+                    telefono   = ${telefono},
+                    email      = ${email},
+                    note       = ${note}
+                WHERE clienteid = ${id}
                 RETURNING 
-                    "ClienteID",
-                    "Nominativo",
-                    "Via",
-                    "Comune",
-                    "Provincia",
-                    "Telefono",
-                    "Email",
-                    "Note"
+                    clienteid  AS "ClienteID",
+                    nominativo AS "Nominativo",
+                    via        AS "Via",
+                    comune     AS "Comune",
+                    provincia  AS "Provincia",
+                    telefono   AS "Telefono",
+                    email      AS "Email",
+                    note       AS "Note"
             `;
 
             console.log("[CLIENTE] Cliente modificato con ID:", result[0].ClienteID);
@@ -241,10 +241,10 @@ const clienteController = (sql) => {
         const { id } = req.params;
 
         try {
-            // Verifica se la categoria esiste
+            // Verifica se il cliente esiste
             const checkExists = await sql`
-                SELECT "ClienteID" FROM "Cliente" 
-                WHERE "ClienteID" = ${id}
+                SELECT clienteid FROM cliente
+                WHERE clienteid = ${id}
             `;
 
             if (checkExists.length === 0) {
@@ -253,10 +253,10 @@ const clienteController = (sql) => {
                 });
             }
 
-            // Verifica se ci sono richieste associate (RESTRICT constraint)
+            // Verifica se ci sono consegne associate (vincolo applicativo)
             const checkUsage = await sql`
-                SELECT COUNT(*) as count FROM "Consegna" 
-                WHERE "ClienteID" = ${id}
+                SELECT COUNT(*) as count FROM consegna
+                WHERE clienteid = ${id}
             `;
 
             if (parseInt(checkUsage[0].count) > 0) {
@@ -266,10 +266,10 @@ const clienteController = (sql) => {
                 });
             }
 
-            // Elimina la categoria
+            // Elimina il cliente
             await sql`
-                DELETE FROM "Cliente" 
-                WHERE "ClienteID" = ${id}
+                DELETE FROM cliente
+                WHERE clienteid = ${id}
             `;
 
             console.log("[CLIENTE] Cliente eliminato con ID:", id);
