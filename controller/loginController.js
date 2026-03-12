@@ -121,11 +121,15 @@ const loginController = (sql) => {
         }
 
         try {
-            // Cerca l'utente per email nella tabella Utente
+            // Cerca l'utente per email nella tabella utente (schema: UtenteID, Email, Password, Admin)
             const result = await sql`
-                SELECT "UtenteID", "Nominativo", "Email", "Password", "Admin" 
-                FROM "Utente" 
-                WHERE "Email" = ${email}
+                SELECT 
+                    utenteid AS "UtenteID",
+                    email    AS "Email",
+                    password AS "Password",
+                    admin    AS "Admin"
+                FROM utente 
+                WHERE email = ${email}
             `;
 
             if (result.length === 0) {
@@ -145,13 +149,20 @@ const loginController = (sql) => {
 
             console.log("[LOGIN] Autenticazione riuscita per:", email);
 
+            // Calcola ruolo logico a partire dal flag Admin
+            const isAdmin =
+                utente.Admin === true ||
+                utente.Admin === "true" ||
+                utente.Admin === "1";
+
+            const ruoloLogico = isAdmin ? "Amministratore" : "Operatore";
+
             // Genera il Token JWT per la gestione della Session
             const token = jwt.sign(
                 {
                     id: utente.UtenteID,
                     email: utente.Email,
-                    nome: utente.Nominativo,
-                    ruolo: utente.Admin
+                    ruolo: ruoloLogico
                 },
                 process.env.JWT_SECRET || "segreto_super_sicuro_da_cambiare",
                 { expiresIn: "24h" } // 24 ore
@@ -175,9 +186,8 @@ const loginController = (sql) => {
                 message: "Login effettuato con successo",
                 user: {
                     id: utente.UtenteID,
-                    nome: utente.Nominativo,
                     email: utente.Email,
-                    ruolo: utente.Admin
+                    ruolo: ruoloLogico
                 }
             });
         } catch (err) {

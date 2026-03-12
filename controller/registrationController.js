@@ -124,16 +124,16 @@ const registrationController = (sql) => {
         const { nome, cognome, email, password, ruolo } = req.body || {};
 
         // Validazione campi obbligatori
-        if (!nome || !cognome || !email || !password) {
+        if (!email || !password) {
             return res.status(400).json({
-                error: "Nome, cognome, email e password sono obbligatori"
+                error: "Email e password sono obbligatorie"
             });
         }
 
-        // Validazione del ruolo (se fornito)
-        if (ruolo && ruolo !== "Dipendente" && ruolo !== "Responsabile") {
+        // Validazione del ruolo (se fornito) - viene mappato sul flag Admin
+        if (ruolo && ruolo !== "Dipendente" && ruolo !== "Responsabile" && ruolo !== "Operatore" && ruolo !== "Amministratore") {
             return res.status(400).json({
-                error: "Il ruolo deve essere 'Dipendente' o 'Responsabile'"
+                error: "Il ruolo deve essere 'Dipendente', 'Responsabile', 'Operatore' o 'Amministratore'"
             });
         }
 
@@ -157,9 +157,9 @@ const registrationController = (sql) => {
             console.log("[REGISTRAZIONE] Verifica email:", email);
             console.log("[REGISTRAZIONE] Dati ricevuti:", { nome, cognome, email, ruolo });
             const checkResult = await sql`
-                SELECT "Email" 
-                FROM "Utente" 
-                WHERE "Email" = ${email}
+                SELECT email 
+                FROM utente 
+                WHERE email = ${email}
             `;
 
             if (checkResult.length > 0) {
@@ -174,38 +174,42 @@ const registrationController = (sql) => {
             const saltRounds = 10;
             const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-            // Inserisci il nuovo utente nel database
-            // Se ruolo non è specificato, il database userà il default 'Dipendente'
-            let result;
+            // Calcola il flag Admin a partire dal ruolo (se fornito)
+            const isAdmin =
+                ruolo === "Responsabile" ||
+                ruolo === "Amministratore" ||
+                ruolo === "Admin";
 
-            if (ruolo) {
-                console.log("[REGISTRAZIONE] Inserimento con ruolo:", ruolo);
-                result = await sql`
-                    INSERT INTO "Utente" ("Nome", "Cognome", "Email", "Password", "Ruolo")
-                    VALUES (${nome}, ${cognome}, ${email}, ${hashedPassword}, ${ruolo})
-                    RETURNING "UtenteID", "Nome", "Cognome", "Email", "Ruolo"
-                `;
-            } else {
-                console.log("[REGISTRAZIONE] Inserimento senza ruolo (usa default)");
-                result = await sql`
-                    INSERT INTO "Utente" ("Nome", "Cognome", "Email", "Password")
-                    VALUES (${nome}, ${cognome}, ${email}, ${hashedPassword})
-                    RETURNING "UtenteID", "Nome", "Cognome", "Email", "Ruolo"
-                `;
-            }
+            const adminValue = isAdmin ? "true" : "false";
+
+            // Inserisci il nuovo utente nel database (schema: UtenteID, Email, Password, Admin)
+            const result = await sql`
+                INSERT INTO utente (email, password, admin)
+                VALUES (${email}, ${hashedPassword}, ${adminValue})
+                RETURNING 
+                    utenteid AS "UtenteID",
+                    email    AS "Email",
+                    admin    AS "Admin"
+            `;
 
             const newUser = result[0];
             console.log("[REGISTRAZIONE] Utente creato con successo - ID:", newUser.UtenteID);
+
+            // Ruolo logico usato dal frontend e dal token
+            const ruoloLogico = (newUser.Admin === true || newUser.Admin === "true" || newUser.Admin === "1")
+                ? "Amministratore"
+                : "Operatore";
 
             // Restituisci i dati dell'utente creato (senza password)
             return res.status(201).json({
                 message: "Utente registrato con successo",
                 user: {
                     id: newUser.UtenteID,
-                    nome: newUser.Nome,
-                    cognome: newUser.Cognome,
+                    // nome/cognome non sono più salvati nel DB, ma li rimandiamo al client se forniti
+                    nome: nome || "",
+                    cognome: cognome || "",
                     email: newUser.Email,
-                    ruolo: newUser.Ruolo
+                    ruolo: ruoloLogico
                 }
             });
 
