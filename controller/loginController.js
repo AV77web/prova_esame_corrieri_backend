@@ -123,7 +123,7 @@ const loginController = (sql) => {
         try {
             // Cerca l'utente per email nella tabella Utente
             const result = await sql`
-                SELECT "UtenteID", "Nome", "Cognome", "Email", "Password", "Ruolo" 
+                SELECT "UtenteID", "Nominativo", "Email", "Password", "Admin" 
                 FROM "Utente" 
                 WHERE "Email" = ${email}
             `;
@@ -150,9 +150,8 @@ const loginController = (sql) => {
                 {
                     id: utente.UtenteID,
                     email: utente.Email,
-                    nome: utente.Nome,
-                    cognome: utente.Cognome,
-                    ruolo: utente.Ruolo
+                    nome: utente.Nominativo,
+                    ruolo: utente.Admin
                 },
                 process.env.JWT_SECRET || "segreto_super_sicuro_da_cambiare",
                 { expiresIn: "24h" } // 24 ore
@@ -176,10 +175,9 @@ const loginController = (sql) => {
                 message: "Login effettuato con successo",
                 user: {
                     id: utente.UtenteID,
-                    nome: utente.Nome,
-                    cognome: utente.Cognome,
+                    nome: utente.Nominativo,
                     email: utente.Email,
-                    ruolo: utente.Ruolo
+                    ruolo: utente.Admin
                 }
             });
         } catch (err) {
