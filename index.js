@@ -15,9 +15,10 @@ const { FRONTEND_URL: DEFAULT_FRONTEND_URL } = require("./config");
 const loginController = require("./controller/loginController");
 const registrationController = require("./controller/registrationController");
 const authController = require("./controller/authController");
-const authMiddleware = require("./middleware/authMiddleware");
 const consegneController = require("./controller/consegneController");
 const clienteController = require("./controller/clienteController");
+const utentiController = require("./controller/utentiController");
+const trackingController = require("./controller/trackingController");
 const { verifyToken, verifyRole } = require("./middleware/authMiddleware");
 const { setupSwagger } = require("./swagger");
 const port = process.env.PORT || 3000;
@@ -67,6 +68,8 @@ app.use("/register", registrationController(sql));
 app.use("/auth", authController(sql));
 app.use("/consegne", verifyToken, consegneController(sql));
 app.use("/clienti", verifyToken, clienteController(sql));
+app.use("/utenti", verifyToken, verifyRole(["Amministratore"]), utentiController(sql));
+app.use("/tracking", trackingController(sql)); // pubblico
 
 
 app.listen(port, "0.0.0.0", () => {
