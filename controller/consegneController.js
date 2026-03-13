@@ -344,6 +344,19 @@ const consegneController = (sql) => {
         return res.status(404).json({ error: "Cliente non trovato" });
       }
 
+      // Verifica che la chiaveConsegna non sia già utilizzata
+      const chiaveCheck = await sql`
+        SELECT consegnaid
+        FROM consegna
+        WHERE chiaveconsegna = ${chiaveConsegna}
+      `;
+
+      if (chiaveCheck.length > 0) {
+        return res.status(409).json({
+          error: "Esiste già una consegna con questa chiaveConsegna",
+        });
+      }
+
       const result = await sql`
         INSERT INTO consegna
           (clienteid, dataritiro, dataconsegna, stato, chiaveconsegna)
@@ -484,6 +497,20 @@ const consegneController = (sql) => {
       `;
       if (clienteCheck.length === 0) {
         return res.status(404).json({ error: "Cliente non trovato" });
+      }
+
+      // Verifica che la chiaveConsegna non sia già utilizzata da un'altra consegna
+      const chiaveCheck = await sql`
+        SELECT consegnaid
+        FROM consegna
+        WHERE chiaveconsegna = ${chiaveConsegna}
+          AND consegnaid != ${consegnaId}
+      `;
+
+      if (chiaveCheck.length > 0) {
+        return res.status(409).json({
+          error: "Esiste già un'altra consegna con questa chiaveConsegna",
+        });
       }
 
       const result = await sql`
